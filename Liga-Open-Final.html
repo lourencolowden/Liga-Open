@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liga Open - Gestão de Ténis</title>
+    
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+    
+    <script>
+        // Configuração da app Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBZL1zFQZYtgPMr1ZFGpYA8KKtZUhv0E",
+            authDomain: "liga-open.firebaseapp.com",
+            databaseURL: "https://liga-open-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "liga-open",
+            storageBucket: "liga-open.firebasestorage.app",
+            messagingSenderId: "106413562928",
+            appId: "1:106413562928:web:3f102b64b780be41d3a1f5",
+            measurementId: "G-RJ1YWWJT8E"
+        };
+
+        // Inicializar Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+    </script>
+
+    <style>
+        :root {
+            --color-primary: #208080;
+            --color-primary-hover: #1a6666;
+            --color-primary-active: #155252;
+            --color-secondary: rgba(32, 128, 128, 0.1);
+            --color-border: rgba(32, 128, 128, 0.2);
+            --color-bg: #f8f9f7;
+            --color-surface: #ffffff;
+            --color-text: #1a1a1a;
+            --color-text-secondary: #666666;
+            --color-success: #22c55e;
+            --color-error: #ef4444;
+            --color-warning: #f59e0b;
+            --color-focus-ring: rgba(32, 128, 128, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+            color: white;
+            padding: 30px 20px;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .sponsors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 20px;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .sponsor-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            transition: all 200ms ease;
+            text-decoration: none;
+            min-height: 90px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .sponsor-logo:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .sponsor-logo img {
+            max-width: 85%;
+            height: auto;
+            filter: brightness(1) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        .sponsor-logo:hover img {
+            filter: brightness(1.1) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.15));
+        }
+
+        nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 10px 16px;
+            border: 2px solid var(--color-border);
+            background: var(--color-surface);
+            color: var(--color-text);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 200ms ease;
+        }
+
+        .nav-btn.active {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        .nav-btn:hover {
+            border-color: var(--color-primary);
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .ranking-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--color-surface);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        .ranking-table th {
+            background: var(--color-secondary);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .ranking-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .ranking-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .ranking-table tr:hover {
+            background: var(--color-secondary);
+        }
+
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: var(--color-primary);
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .rank-badge.top-3 {
+            background: #d4af37;
+            color: #333;
+        }
+
+        .player-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            transition: all 200ms ease;
+        }
+
+        .player-row:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 2px 8px rgba(32, 128, 128, 0.1);
+        }
+
+        .player-info {
+            flex: 1;
+        }
+
+        .player-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .player-meta {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: var(--color-text);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 200ms ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px var(--color-focus-ring);
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 200ms ease;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .btn-primary:active {
+            background: var(--color-primary-active);
+        }
+
+        .btn-secondary {
+            background: var(--color-secondary);
+            color: var(--color-text);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(32, 128, 128, 0.15);
+        }
+
+        .btn-danger {
+            background: var(--color-error);
+            color: white;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .card {
+            background: var(--color-surface);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--color-border);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: var(--color-text);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: var(--color-secondary);
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--color-primary);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            margin-top: 5px;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid var(--color-success);
+            color: #166534;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--color-error);
+            color: #991b1b;
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid var(--color-warning);
+            color: #92400e;
+        }
+
+        .dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dialog.open {
+            display: flex;
+        }
+
+        .dialog-content {
+            background: var(--color-surface);
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .dialog-header {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .dialog-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--color-text-secondary);
+        }
+
+        .admin-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            border: 2px solid white;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 200ms ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .admin-button:hover {
+            background: var(--color-primary-hover);
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .admin-panel {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .admin-panel h3 {
+            margin-top: 0;
+            color: white;
+        }
+
+        .admin-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .admin-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 200ms ease;
+        }
+
+        .admin-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .login-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-modal.open {
+            display: flex;
+        }
+
+        .login-content {
+            background: var(--color-surface);
+            padding: 40px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideIn 300ms ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .login-content h2 {
+            color: var(--color-primary);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .login-content p {
+            color: var(--color-text-secondary);
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .login-content button {
+            width: 100%;
+            padding: 12px;
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 200ms ease;
+            margin-bottom: 10px;
+        }
+
+        .login-content button:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .admin-alert {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid var(--color-success);
+            color: #166534;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .admin-alert.error {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: var(--color-error);
+            color: #991b1b;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            header h1 {
+                font-size: 20px;
+            }
+            .sponsors-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+            .sponsor-logo {
+                min-height: 85px;
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                <div>
+                    <h1 style="margin: 0 0 5px 0;">LIGA OPEN - 1. Edição</h1>
+                    <p style="margin: 0;">Torneio Social de Ténis | Jan-Mar 2026</p>
+                </div>
+            </div>
+            <div style="border-top: 2px solid rgba(255,255,255,0.2); padding-top: 15px;">
+                <p style="font-size: 12px; margin-bottom: 12px; opacity: 0.9; font-weight: 500;">PATROCINADORES OFICIAIS</p>
+                <div class="sponsors-grid">
+                    <a href="https://www.cliphotel.pt" target="_blank" rel="noopener noreferrer" class="sponsor-logo" title="CLIP HOTEL">
+                        <img src="https://agi-prod-file-upload-public-main-use1.s3.amazonaws.com/aa90e5ea-b3f1-489f-966e-8b24c7e9ae2a" alt="CLIP HOTEL" style="height: 60px; object-fit: contain;">
+                    </a>
+                    <a href="https://www.casadedarei.pt" target="_blank" rel="noopener noreferrer" class="sponsor-logo" title="Casa de Darei">
+                        <img src="https://agi-prod-file-upload-public-main-use1.s3.amazonaws.com/cb0d29f5-da78-4471-9ccd-75e4158f59e0" alt="Casa de Darei" style="height: 60px; object-fit: contain;">
+                    </a>
+                    <a href="https://www.horasradiantes.pt" target="_blank" rel="noopener noreferrer" class="sponsor-logo" title="Horas Radiantes">
+                        <img src="https://agi-prod-file-upload-public-main-use1.s3.amazonaws.com/fb22cdc7-6d79-4861-b926-eae55fbe155f" alt="Horas Radiantes" style="height: 60px; object-fit: contain;">
+                    </a>
+                    <a href="https://www.rodrigofleming.pt" target="_blank" rel="noopener noreferrer" class="sponsor-logo" title="Rodrigo Fleming Real Estate">
+                        <img src="https://agi-prod-file-upload-public-main-use1.s3.amazonaws.com/68f03753-6b8b-49b4-a082-56317afbac09" alt="Rodrigo Fleming Real Estate" style="height: 60px; object-fit: contain;">
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <nav>
+            <button class="nav-btn active" onclick="switchSection('ranking')">Ranking</button>
+            <button class="nav-btn" onclick="switchSection('record')">Registar Resultado</button>
+            <button class="nav-btn" onclick="switchSection('players')">Jogadores</button>
+            <button class="nav-btn" onclick="switchSection('rules')">Regulamento</button>
+        </nav>
+
+        <!-- RANKING SECTION -->
+        <div id="ranking" class="section active">
+            <div class="card">
+                <h2>Ranking Atual</h2>
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="stat-value" id="totalPlayers">0</div>
+                        <div class="stat-label">Jogadores</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="totalMatches">0</div>
+                        <div class="stat-label">Encontros</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="daysLeft">102</div>
+                        <div class="stat-label">Dias Restantes</div>
+                    </div>
+                </div>
+                <table class="ranking-table">
+                    <thead>
+                        <tr>
+                            <th>Posição</th>
+                            <th>Jogador</th>
+                            <th>Pontos</th>
+                            <th>Jogos</th>
+                            <th>Vitórias</th>
+                            <th>Derrotas</th>
+                            <th>% Vitórias</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rankingBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- RECORD RESULT SECTION -->
+        <div id="record" class="section">
+            <div class="card">
+                <h2>Registar Resultado do Encontro</h2>
+                <form onsubmit="submitResult(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Incitador (Quem desafiou)</label>
+                            <select id="challenger" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Incitado (Quem foi desafiado)</label>
+                            <select id="opponent" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Formato do Encontro</label>
+                        <select id="format" onchange="updatePointsInfo()" required>
+                            <option value="">Selecione o formato...</option>
+                            <option value="bo3">Melhor de 3 sets (super tie-break)</option>
+                            <option value="bo3-normal">Melhor de 3 sets (set normal no 3º)</option>
+                            <option value="proset">Pro Set (até 9 jogos)</option>
+                            <option value="single">1 set (até 6 jogos)</option>
+                        </select>
+                    </div>
+                    <div class="alert alert-warning" id="pointsInfo">Selecione um formato para ver a pontuação</div>
+
+                    <div class="form-group">
+                        <label>Vencedor</label>
+                        <select id="winner" required>
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Resultado do Encontro</label>
+                        <div style="background: var(--color-secondary); padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                            <p style="font-size: 13px; color: var(--color-text-secondary); margin: 0 0 12px 0;">
+                                <strong>Formato esperado</strong> - Exemplo: 6-3, 4-6, 10-7 (melhor de 3) ou 6-4, 7-5 (sets) ou 10-8 (pro set) ou 7-6, 5 (tie-break)
+                            </p>
+                            <div id="resultFormatGuide" style="font-size: 12px; color: var(--color-text-secondary); background: rgba(0,0,0,0.1); padding: 10px; border-radius: 4px; margin-bottom: 12px; border-left: 3px solid var(--color-primary);"></div>
+                            <input type="text" id="matchResult" placeholder="Ex: 6-3, 4-6, 10-7" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Local do Encontro</label>
+                        <input type="text" id="location" placeholder="Ex: Sport Clube Alberto Sousa" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Data do Encontro</label>
+                        <input type="date" id="matchDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Notas (opcional)</label>
+                        <textarea id="notes" rows="3" placeholder="Resultado detalhado, sets, etc."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Registar Resultado</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- PLAYERS SECTION -->
+        <div id="players" class="section">
+            <div class="card">
+                <h2>Gestão de Jogadores</h2>
+                <button class="btn btn-primary" onclick="openDialog('newPlayer')">Adicionar Jogador</button>
+                <div id="playersList"></div>
+            </div>
+        </div>
+
+        <!-- ADMIN PANEL SECTION -->
+        <div id="adminPanel" style="display: none;">
+            <div class="admin-panel">
+                <h3>Painel de Administração</h3>
+                <div style="font-size: 13px; margin-bottom: 15px; color: rgba(255,255,255,0.9);">
+                    Você tem acesso às funções de administrador. Aprove ou rejeite resultados pendentes.
+                </div>
+
+                <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin-top: 0; color: white;">Jogadores Pendentes de Aprovação</h4>
+                    <div id="pendingPlayersList" style="max-height: 500px; overflow-y: auto;"></div>
+                </div>
+
+                <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <h4 style="margin-top: 0; color: white;">Resultados Pendentes de Aprovação</h4>
+                    <div id="pendingResultsList" style="max-height: 500px; overflow-y: auto;"></div>
+                </div>
+
+                <div class="admin-controls">
+                    <button class="admin-btn" onclick="exportData()" style="background: rgba(34, 197, 94, 0.3); border-color: rgba(34, 197, 94, 0.5);">Exportar Dados</button>
+                    <button class="admin-btn" onclick="resetAllData()" style="background: rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.5);">Eliminar Tudo</button>
+                    <button class="admin-btn" onclick="logoutAdmin()">Sair</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADMIN LOGIN BUTTON -->
+        <button id="adminButton" class="admin-button" onclick="openLoginModal()" title="Entrar como Admin">⚙️</button>
+
+        <!-- LOGIN MODAL -->
+        <div id="loginModal" class="login-modal">
+            <div class="login-content">
+                <button class="dialog-close" onclick="closeLoginModal()">✕</button>
+                <h2>Acesso de Administrador</h2>
+                <p>Introduza a senha de administrador para aceder ao painel de controlo</p>
+                <div class="form-group">
+                    <label>Senha de Administrador</label>
+                    <input type="password" id="adminPassword" placeholder="" required>
+                </div>
+                <div id="loginAlert" class="admin-alert" style="display: none;"></div>
+                <button type="button" onclick="verifyPassword()" class="btn btn-primary" style="width: 100%; margin-bottom: 10px;">Entrar</button>
+                <button type="button" onclick="closeLoginModal()" class="btn btn-secondary" style="width: 100%;">Cancelar</button>
+            </div>
+        </div>
+
+        <!-- RULES SECTION -->
+        <div id="rules" class="section">
+            <div class="card">
+                <h2>Regulamento da Liga Open</h2>
+                <div style="font-size: 14px; line-height: 1.8; color: var(--color-text);">
+                    <h3 style="margin-top: 20px; margin-bottom: 10px;">1. Estrutura Geral</h3>
+                    <p>A Liga decorrerá de 1 de janeiro a 30 de março de 2026. O Masters Final será disputado em abril de 2026.</p>
+
+                    <h3 style="margin-top: 20px; margin-bottom: 10px;">2. Formatos de Jogo</h3>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>Melhor de 3 sets</strong> - Tie-break nos 2 primeiros, super tie-break aos 10 no 3º</li>
+                        <li><strong>Pro Set at 9</strong> - Tie-break em 8-8</li>
+                        <li><strong>1 set at 6</strong> - Tie-break em 6-6, ponto de ouro opcional</li>
+                    </ul>
+
+                    <h3 style="margin-top: 20px; margin-bottom: 10px;">3. Pontuação</h3>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>Melhor de 3 sets</strong> - V: 6pts | D: 3pts (+ 1 extra se 3º set normal)</li>
+                        <li><strong>Pro Set</strong> - V: 4pts | D: 2pts</li>
+                        <li><strong>1 set</strong> - V: 3pts | D: 1pt</li>
+                    </ul>
+
+                    <h3 style="margin-top: 20px; margin-bottom: 10px;">4. Regras de Desafios</h3>
+                    <ul style="margin-left: 20px;">
+                        <li>Pode desafiar qualquer jogador da lista</li>
+                        <li>Não é obrigatório aceitar</li>
+                        <li>Só pode voltar a desafiar o mesmo após 3 jogos com outros</li>
+                    </ul>
+
+                    <h3 style="margin-top: 20px; margin-bottom: 10px;">5. Masters Final</h3>
+                    <p>Os 8 primeiros classificados apuram-se para o Masters Final no Sport Clube Alberto Sousa em abril.</p>
+                    <p><strong>Formato</strong> - Round Robin (2 grupos de 4) + meias-finais e final</p>
+
+                    <h3 style="margin-top: 20px; margin-bottom: 10px;">6. Inscrição</h3>
+                    <p><strong>Valor</strong> - 30€ | <strong>Contacto</strong> - 917 859 843</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- DIALOGS -->
+        <div id="newPlayerDialog" class="dialog">
+            <div class="dialog-content">
+                <button class="dialog-close" onclick="closeDialog('newPlayer')">✕</button>
+                <div class="dialog-header">Adicionar Novo Jogador</div>
+                <form onsubmit="addPlayer(event)">
+                    <div class="form-group">
+                        <label>Nome do Jogador</label>
+                        <input type="text" id="playerName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email (opcional)</label>
+                        <input type="email" id="playerEmail">
+                    </div>
+                    <div class="form-group">
+                        <label>Telemóvel (opcional)</label>
+                        <input type="tel" id="playerPhone">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Adicionar Jogador</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DATA STORAGE
+        let players = [];
+        let matches = [];
+        let isAdmin = JSON.parse(localStorage.getItem('liaaAdminSession') || 'false');
+
+        // ADMIN PASSWORD - CHANGE THIS TO YOUR SECURE PASSWORD
+        const ADMINPASSWORD = 'TeKraDor2026';
+
+        // FIREBASE FUNCTIONS
+        function loadDataFromFirebase() {
+            // Ouvir alterações na lista de jogadores
+            db.ref('players').on('value', (snapshot) => {
+                const data = snapshot.val();
+                players = data ? Object.values(data) : [];
+                renderRanking();
+                renderPlayers();
+                populateSelects();
+                updateAdminPanel();
+            });
+
+            // Ouvir alterações na lista de encontros
+            db.ref('matches').on('value', (snapshot) => {
+                const data = snapshot.val();
+                matches = data ? Object.values(data) : [];
+                renderRanking();
+                renderPendingResults();
+            });
+        }
+
+        // INITIALIZATION
+        function init() {
+            if (players.length === 0) {
+                players = [
+                    { id: 1, name: 'João Silva', email: 'joao@example.com', phone: '', joinDate: '2026-01-01', status: 'approved' },
+                    { id: 2, name: 'Maria Santos', email: 'maria@example.com', phone: '', joinDate: '2026-01-01', status: 'approved' },
+                    { id: 3, name: 'Pedro Costa', email: 'pedro@example.com', phone: '', joinDate: '2026-01-01', status: 'approved' },
+                    { id: 4, name: 'Ana Dias', email: 'ana@example.com', phone: '', joinDate: '2026-01-01', status: 'approved' }
+                ];
+                saveData();
+            }
+            renderRanking();
+            renderPlayers();
+            populateSelects();
+            updateAdminPanel();
+        }
+
+        function saveData() {
+            // Guardar jogadores
+            const playersObj = {};
+            players.forEach(p => {
+                playersObj[p.id] = p;
+            });
+            db.ref('players').set(playersObj);
+
+            // Guardar encontros
+            const matchesObj = {};
+            matches.forEach(m => {
+                matchesObj[m.id] = m;
+            });
+            db.ref('matches').set(matchesObj);
+        }
+
+        // ADMIN FUNCTIONS
+        function updateAdminPanel() {
+            const adminPanel = document.getElementById('adminPanel');
+            const adminButton = document.getElementById('adminButton');
+            if (isAdmin) {
+                adminPanel.style.display = 'block';
+                adminButton.title = 'Sair da área de Admin';
+                adminButton.textContent = '✓';
+                renderPendingPlayers();
+                renderPendingResults();
+            } else {
+                adminPanel.style.display = 'none';
+                adminButton.title = 'Entrar como Admin';
+                adminButton.textContent = '⚙️';
+            }
+        }
+
+        function renderPendingPlayers() {
+            const list = document.getElementById('pendingPlayersList');
+            const pendingPlayers = players.filter(p => p.status === 'pending');
+
+            if (pendingPlayers.length === 0) {
+                list.innerHTML = '<p style="color: var(--color-text-secondary); font-size: 14px;">Não há jogadores pendentes de aprovação.</p>';
+                return;
+            }
+
+            list.innerHTML = `<div style="border-bottom: 1px solid var(--color-border); padding-bottom: 15px; margin-bottom: 15px;"><strong style="color: var(--color-warning);">${pendingPlayers.length} jogadores pendentes de aprovação</strong></div>` +
+                pendingPlayers.map(p => `
+                    <div style="background: var(--color-secondary); padding: 15px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid var(--color-warning);">
+                        <div style="margin-bottom: 10px;"><strong>${p.name}</strong></div>
+                        <div style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 8px;">
+                            ${p.email ? `<p style="margin: 4px 0;">${p.email}</p>` : ''}
+                            ${p.phone ? `<p style="margin: 4px 0;">${p.phone}</p>` : ''}
+                            <p style="margin: 4px 0;">Inscrição: ${new Date(p.joinDate).toLocaleDateString('pt-PT')}</p>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 12px;">
+                            <button class="admin-btn" style="flex: 1;" onclick="approvePlayer(${p.id})">Aprovar</button>
+                            <button class="admin-btn" style="flex: 1; background: rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.5);" onclick="rejectPlayer(${p.id})">Rejeitar</button>
+                        </div>
+                    </div>
+                `).join('');
+        }
+
+        function approvePlayer(id) {
+            const player = players.find(p => p.id === id);
+            if (player && player.status === 'pending') {
+                player.status = 'approved';
+                saveData();
+                renderRanking();
+                renderPlayers();
+                renderPendingPlayers();
+                populateSelects();
+                alert('Jogador aprovado com sucesso!');
+            }
+        }
+
+        function rejectPlayer(id) {
+            if (confirm('Tem a certeza que deseja rejeitar este jogador?')) {
+                const playerIndex = players.findIndex(p => p.id === id && p.status === 'pending');
+                if (playerIndex !== -1) {
+                    players.splice(playerIndex, 1);
+                    saveData();
+                    renderRanking();
+                    renderPlayers();
+                    renderPendingPlayers();
+                    populateSelects();
+                    alert('Jogador rejeitado e removido.');
+                }
+            }
+        }
+
+        function renderPendingResults() {
+            const list = document.getElementById('pendingResultsList');
+            const pendingMatches = matches.filter(m => m.status === 'pending');
+
+            if (pendingMatches.length === 0) {
+                list.innerHTML = '<p style="color: var(--color-text-secondary); font-size: 14px;">Não há resultados pendentes de aprovação.</p>';
+                return;
+            }
+
+            list.innerHTML = `<div style="border-bottom: 1px solid var(--color-border); padding-bottom: 15px; margin-bottom: 15px;"><strong style="color: var(--color-warning);">${pendingMatches.length} resultados pendentes de aprovação</strong></div>` +
+                pendingMatches.map((m, idx) => {
+                    const challenger = players.find(p => p.id === m.challenger);
+                    const opponent = players.find(p => p.id === m.opponent);
+                    const winner = players.find(p => p.id === m.winner);
+                    const formatLabel = {
+                        bo3: 'Melhor de 3 sets',
+                        'bo3-normal': 'Melhor de 3 set normal',
+                        proset: 'Pro Set at 9',
+                        single: '1 set'
+                    }[m.format] || m.format;
+
+                    return `
+                        <div style="background: var(--color-secondary); padding: 15px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid var(--color-warning);">
+                            <div style="margin-bottom: 10px;"><strong>${challenger?.name} vs ${opponent?.name}</strong> <span style="float: right; color: var(--color-success); font-weight: bold;">${winner?.name}</span></div>
+                            <div style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 8px;">
+                                <p style="margin: 4px 0;">${m.location} - ${new Date(m.date).toLocaleDateString('pt-PT')}</p>
+                                <p style="margin: 4px 0;">${formatLabel} - ${m.result}</p>
+                                ${m.notes ? `<p style="margin: 4px 0;">${m.notes}</p>` : '<p style="margin: 4px 0;">Sem notas</p>'}
+                            </div>
+                            <div style="display: flex; gap: 10px; margin-top: 12px;">
+                                <button class="admin-btn" style="flex: 1;" onclick="approveResult(${idx})">Aprovar</button>
+                                <button class="admin-btn" style="flex: 1; background: rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.5);" onclick="rejectResult(${idx})">Rejeitar</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+        }
+
+        function approveResult(idx) {
+            const pendingMatches = matches.filter(m => m.status === 'pending');
+            if (pendingMatches[idx]) {
+                const matchToApprove = matches.find(m =>
+                    m.challenger === pendingMatches[idx].challenger &&
+                    m.opponent === pendingMatches[idx].opponent &&
+                    m.date === pendingMatches[idx].date &&
+                    m.status === 'pending'
+                );
+                if (matchToApprove) {
+                    matchToApprove.status = 'approved';
+                    saveData();
+                    renderRanking();
+                    renderPendingResults();
+                    alert('Resultado aprovado com sucesso!');
+                }
+            }
+        }
+
+        function rejectResult(idx) {
+            if (confirm('Tem a certeza que deseja rejeitar este resultado?')) {
+                const pendingMatches = matches.filter(m => m.status === 'pending');
+                if (pendingMatches[idx]) {
+                    const matchIndex = matches.findIndex(m =>
+                        m.challenger === pendingMatches[idx].challenger &&
+                        m.opponent === pendingMatches[idx].opponent &&
+                        m.date === pendingMatches[idx].date &&
+                        m.status === 'pending'
+                    );
+                    if (matchIndex !== -1) {
+                        matches.splice(matchIndex, 1);
+                        saveData();
+                        renderRanking();
+                        renderPendingResults();
+                        alert('Resultado rejeitado e removido.');
+                    }
+                }
+            }
+        }
+
+        // LOGIN FUNCTIONS
+        function openLoginModal() {
+            if (isAdmin) {
+                logoutAdmin();
+                return;
+            }
+            document.getElementById('loginModal').classList.add('open');
+            document.getElementById('adminPassword').focus();
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.remove('open');
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('loginAlert').style.display = 'none';
+        }
+
+        function verifyPassword() {
+            const password = document.getElementById('adminPassword').value;
+            const alertDiv = document.getElementById('loginAlert');
+
+            if (password === ADMINPASSWORD) {
+                isAdmin = true;
+                localStorage.setItem('liaaAdminSession', JSON.stringify(true));
+                localStorage.setItem('liaaLoginTime', new Date().getTime());
+                closeLoginModal();
+                updateAdminPanel();
+                alert('Acesso de administrador concedido!');
+            } else {
+                alertDiv.textContent = 'Senha incorreta. Tente novamente.';
+                alertDiv.classList.add('error');
+                alertDiv.style.display = 'block';
+                document.getElementById('adminPassword').select();
+            }
+        }
+
+        function logoutAdmin() {
+            isAdmin = false;
+            localStorage.setItem('liaaAdminSession', JSON.stringify(false));
+            localStorage.removeItem('liaaLoginTime');
+            updateAdminPanel();
+            alert('Sessão de administrador encerrada.');
+        }
+
+        function resetAllData() {
+            if (confirm('AVISO: Isto vai eliminar TODOS os dados da liga! Tem a certeza que deseja continuar?')) {
+                if (confirm('Confirme novamente: deseja mesmo eliminar todos os dados?')) {
+                    players = [];
+                    matches = [];
+                    localStorage.removeItem('liaaPlayers');
+                    localStorage.removeItem('liaaMatches');
+                    localStorage.removeItem('liaaAdminSession');
+                    location.reload();
+                    alert('Todos os dados foram eliminados.');
+                }
+            }
+        }
+
+        function exportData() {
+            const data = {
+                players: players,
+                matches: matches,
+                exportDate: new Date().toISOString()
+            };
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `liga-open-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            alert('Dados exportados com sucesso!');
+        }
+
+        // RANKING FUNCTIONS
+        function calculateRanking() {
+            return players.filter(p => p.status === 'approved').map(player => {
+                const playerMatches = matches.filter(m =>
+                    (m.winner === player.id || m.loser === player.id) && m.status === 'approved'
+                );
+                const wins = matches.filter(m => m.winner === player.id && m.status === 'approved').length;
+                const losses = matches.filter(m => m.loser === player.id && m.status === 'approved').length;
+                const points = matches.filter(m => m.winner === player.id && m.status === 'approved').reduce((sum, m) => sum + m.points, 0);
+
+                return {
+                    ...player,
+                    matches: playerMatches.length,
+                    wins,
+                    losses,
+                    points,
+                    winRate: playerMatches.length > 0 ? ((wins / playerMatches.length) * 100).toFixed(1) : 0
+                };
+            }).sort((a, b) => {
+                if (b.points !== a.points) return b.points - a.points;
+                return b.winRate - a.winRate || b.wins - a.wins;
+            });
+        }
+
+        function renderRanking() {
+            const ranking = calculateRanking();
+            const tbody = document.getElementById('rankingBody');
+            tbody.innerHTML = ranking.map((p, idx) => `
+                <tr>
+                    <td><span class="rank-badge ${idx < 3 ? 'top-3' : ''}">${idx + 1}</span></td>
+                    <td><strong>${p.name}</strong></td>
+                    <td><strong>${p.points}</strong></td>
+                    <td>${p.matches}</td>
+                    <td>${p.wins}</td>
+                    <td>${p.losses}</td>
+                    <td>${p.winRate}%</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('totalPlayers').textContent = players.filter(p => p.status === 'approved').length;
+            document.getElementById('totalMatches').textContent = matches.filter(m => m.status === 'approved').length;
+        }
+
+        // RESULT FUNCTIONS
+        function updatePointsInfo() {
+            const format = document.getElementById('format').value;
+            const info = {
+                bo3: 'Vitória: 6 pontos | Derrota: 3 pontos',
+                'bo3-normal': 'Vitória: 7 pontos (+ 1 extra) | Derrota: 3 pontos',
+                proset: 'Vitória: 4 pontos | Derrota: 2 pontos',
+                single: 'Vitória: 3 pontos | Derrota: 1 ponto'
+            };
+            document.getElementById('pointsInfo').textContent = info[format] || 'Selecione um formato';
+
+            const guides = {
+                bo3: 'Melhor de 3 sets: 6-3, 4-6, 10-7 (se 3º com super tie-break)',
+                'bo3-normal': 'Melhor de 3 sets: 6-3, 4-6, 7-5 (3º set sem tie-break)',
+                proset: 'Pro Set: 10-8 ou 10-9 (com tie-break em 8-8)',
+                single: '1 Set: 7-6, 5 ou 6-3'
+            };
+            document.getElementById('resultFormatGuide').textContent = guides[format] || 'Selecione um formato';
+        }
+
+        function validateMatchResult(result, format) {
+            const trimResult = result.trim();
+            const patterns = {
+                bo3: /^[1,2]-[1,2],[1,2]-[1,2],[1,2]-[1,2][,]?$/,
+                'bo3-normal': /^[1,2]-[1,2],[1,2]-[1,2],[1,2]-[1,2]$/,
+                proset: /^[1,2]-[1,2],[1,2]-[1,2]?$/,
+                single: /^[1,2]-[1,2],[1,2]-[1,2]?$/
+            };
+            return patterns[format] ? patterns[format].test(trimResult) : false;
+        }
+
+        function submitResult(event) {
+            event.preventDefault();
+            const challenger = parseInt(document.getElementById('challenger').value);
+            const opponent = parseInt(document.getElementById('opponent').value);
+            const format = document.getElementById('format').value;
+            const winner = parseInt(document.getElementById('winner').value);
+            const matchResult = document.getElementById('matchResult').value.trim();
+            const location = document.getElementById('location').value;
+            const date = document.getElementById('matchDate').value;
+            const notes = document.getElementById('notes').value;
+
+            if (!validateMatchResult(matchResult, format)) {
+                alert('Formato de resultado inválido!\n- Melhor de 3: 6-3, 4-6, 10-7\n- Pro Set: 10-8 ou 10-9\n- 1 Set: 7-6, 5 ou 6-3');
+                document.getElementById('matchResult').focus();
+                return;
+            }
+
+            const points = {
+                bo3: { win: 6, loss: 3 },
+                'bo3-normal': { win: 7, loss: 3 },
+                proset: { win: 4, loss: 2 },
+                single: { win: 3, loss: 1 }
+            };
+            const winnerPoints = points[format].win;
+
+            matches.push({
+                id: matches.length + 1,
+                challenger,
+                opponent,
+                winner,
+                loser: winner === challenger ? opponent : challenger,
+                format,
+                result: matchResult,
+                points: winnerPoints,
+                location,
+                date,
+                notes,
+                resultDate: new Date().toISOString(),
+                status: 'pending',
+                submittedBy: challenger
+            });
+
+            saveData();
+            renderRanking();
+            populateSelects();
+            document.getElementById('record').querySelector('form').reset();
+            alert('Resultado registado! Resultado está pendente de aprovação pelo administrador.');
+        }
+
+        // PLAYER FUNCTIONS
+        function addPlayer(event) {
+            event.preventDefault();
+            const name = document.getElementById('playerName').value;
+            const email = document.getElementById('playerEmail').value;
+            const phone = document.getElementById('playerPhone').value;
+
+            players.push({
+                id: Math.max(...players.map(p => p.id), 0) + 1,
+                name,
+                email,
+                phone,
+                joinDate: new Date().toISOString().split('T')[0],
+                status: 'pending'
+            });
+
+            saveData();
+            renderPlayers();
+            renderRanking();
+            populateSelects();
+            closeDialog('newPlayer');
+            event.target.reset();
+            alert('Jogador registado! Jogador está pendente de aprovação pelo administrador.');
+        }
+
+        function renderPlayers() {
+            const list = document.getElementById('playersList');
+            const ranking = calculateRanking();
+            const approvedPlayers = players.filter(p => p.status === 'approved');
+            const pendingCount = players.filter(p => p.status === 'pending').length;
+
+            let pendingAlert = '';
+            if (pendingCount > 0 && !isAdmin) {
+                pendingAlert = `<div class="alert alert-warning" style="margin-bottom: 20px;">Há ${pendingCount} jogadores pendentes de aprovação do administrador.</div>`;
+            }
+
+            list.innerHTML = pendingAlert + ranking.map(p => `
+                <div class="player-row">
+                    <div class="player-info">
+                        <div class="player-name">${p.name}</div>
+                        <div class="player-meta">${p.email ? p.email : ''} ${p.phone ? p.phone : ''}</div>
+                        <div class="player-meta" style="margin-top: 8px;">Inscrição: ${new Date(p.joinDate).toLocaleDateString('pt-PT')}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 18px; font-weight: bold; color: var(--color-primary);">${p.points}pts</div>
+                        <div style="font-size: 12px; color: var(--color-text-secondary);">${p.wins}V - ${p.losses}D</div>
+                        <button class="btn btn-danger btn-small" style="margin-top: 8px;" onclick="removePlayer(${p.id})">Remover</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function removePlayer(id) {
+            if (confirm('Tem a certeza? Isto removerá todos os dados do jogador.')) {
+                players = players.filter(p => p.id !== id);
+                matches = matches.filter(m => m.winner !== id && m.loser !== id);
+                saveData();
+                renderPlayers();
+                renderRanking();
+                populateSelects();
+            }
+        }
+
+        function populateSelects() {
+            const approvedPlayers = players.filter(p => p.status === 'approved');
+            ['challenger', 'opponent', 'winner'].forEach(id => {
+                const select = document.getElementById(id);
+                if (select) {
+                    const current = select.value;
+                    select.innerHTML = '<option value="">Selecione...</option>' +
+                        approvedPlayers.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+                    if (current) select.value = current;
+                }
+            });
+        }
+
+        // DIALOG FUNCTIONS
+        function openDialog(type) {
+            document.getElementById(type + 'Dialog').classList.add('open');
+        }
+
+        function closeDialog(type) {
+            document.getElementById(type + 'Dialog').classList.remove('open');
+        }
+
+        // SECTION NAVIGATION
+        function switchSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // INIT
+        loadDataFromFirebase();
+        init();
+    </script>
+</body>
+</html>
